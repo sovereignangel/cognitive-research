@@ -260,6 +260,104 @@ def health():
 
 
 # =========================================================================
+# Recording Endpoints (moved here since this server receives the data)
+# =========================================================================
+
+@app.route('/api/eeg/record/start', methods=['POST'])
+def start_recording():
+    """Start recording EEG data."""
+    fetcher = get_fetcher()
+    if not fetcher:
+        return {'success': False, 'error': 'EEG module not available'}, 500
+
+    # Auto-connect to LSL if not already streaming
+    if fetcher.state.value == 'idle':
+        try:
+            from mne_lsl.lsl import resolve_streams
+            streams = resolve_streams(timeout=1.0)
+            muse_streams = [s for s in streams if 'Muse' in s.name]
+            if muse_streams:
+                logger.info("Auto-connecting to LSL streams for recording...")
+                fetcher.connect_lsl()
+        except Exception as e:
+            logger.error(f"Failed to auto-connect: {e}")
+
+    if fetcher.state.value not in ['streaming', 'recording']:
+        return {'success': False, 'error': f'EEG not streaming (state: {fetcher.state.value})'}, 400
+
+    if fetcher.state.value == 'recording':
+        return {'success': True, 'session_id': fetcher.current_session.session_id, 'already_recording': True}
+
+    try:
+        session = fetcher.start_recording()
+        if session:
+            logger.info(f"Recording started: {session.session_id}")
+            return {'success': True, 'session_id': session.session_id}
+        else:
+            return {'success': False, 'error': 'Failed to start recording'}, 500
+    except Exception as e:
+        logger.error(f"Error starting recording: {e}")
+        return {'success': False, 'error': str(e)}, 500
+
+
+@app.route('/api/eeg/record/stop', methods=['POST'])
+def stop_recording():
+    """Stop recording EEG data."""
+    fetcher = get_fetcher()
+    if not fetcher:
+        return {'success': False, 'error': 'EEG module not available'}, 500
+
+    if fetcher.state.value != 'recording':
+        return {'success': False, 'error': f'Not recording (state: {fetcher.state.value})'}, 400
+
+    try:
+        session = fetcher.stop_recording()
+        if session:
+            from dataclasses import asdict
+            logger.info(f"Recording stopped: {session.session_id}, samples: {session.sample_count}")
+            return {'success': True, 'session': asdict(session)}
+        else:
+            return {'success': False, 'error': 'Failed to stop recording'}, 500
+    except Exception as e:
+        logger.error(f"Error stopping recording: {e}")
+        return {'success': False, 'error': str(e)}, 500
+
+
+@app.route('/api/eeg/status')
+def eeg_status():
+    """Get EEG status including recording state."""
+    fetcher = get_fetcher()
+
+    # Check for external LSL streams
+    try:
+        from mne_lsl.lsl import resolve_streams
+        streams = resolve_streams(timeout=0.5)
+        muse_streams = [{'name': s.name, 'type': s.stype} for s in streams if 'Muse' in s.name]
+    except:
+        muse_streams = []
+
+    if not fetcher:
+        return {
+            'available': len(muse_streams) > 0,
+            'state': 'streaming' if muse_streams else 'unavailable',
+            'streams': muse_streams,
+            'current_session': None,
+            'signal_quality': {}
+        }
+
+    from dataclasses import asdict
+
+    return {
+        'available': True,
+        'state': fetcher.state.value,
+        'device_address': fetcher.device_address,
+        'streams': muse_streams,
+        'current_session': asdict(fetcher.current_session) if fetcher.current_session else None,
+        'signal_quality': {k: float(v) for k, v in fetcher.get_signal_quality().items()} if fetcher.state.value in ['streaming', 'recording'] else {}
+    }
+
+
+# =========================================================================
 # Main
 # =========================================================================
 

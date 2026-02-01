@@ -469,10 +469,13 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentHRV !== null]);
 
+  // EEG API base URL (WebSocket server handles EEG since it receives the data)
+  const EEG_API = 'http://localhost:5002';
+
   // Start recording function
   const startRecording = async () => {
     try {
-      const res = await fetch('/api/eeg/record/start', { method: 'POST' });
+      const res = await fetch(`${EEG_API}/api/eeg/record/start`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setIsRecording(true);
@@ -488,7 +491,7 @@ export default function App() {
   // Stop recording function
   const stopRecording = async () => {
     try {
-      const res = await fetch('/api/eeg/record/stop', { method: 'POST' });
+      const res = await fetch(`${EEG_API}/api/eeg/record/stop`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         console.log('Recording stopped:', data.session);
@@ -506,7 +509,7 @@ export default function App() {
   useEffect(() => {
     const checkEegStatus = async () => {
       try {
-        const res = await fetch('/api/eeg/status');
+        const res = await fetch(`${EEG_API}/api/eeg/status`);
         if (res.ok) {
           const data = await res.json();
           const isConnected = data.state === 'streaming' || data.state === 'recording';
