@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* If you have Annex Latin font files, add them here:
+@font-face {
+  font-family: 'Annex Latin';
+  src: url('/fonts/AnnexLatin.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+*/
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #000000;
+  font-family: 'Annex Latin', system-ui, -apple-system, sans-serif;
+  color: #ffffff;
+}
+
+#root {
+  width: 100%;
+}

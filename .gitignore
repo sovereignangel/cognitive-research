@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv*/
+env/
+.env
+*.egg-info/
+dist/
+build/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets and credentials
+credentials.json
+token.json
+*.pem
+*.key
+.env*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Dashboard build
+dashboard-app/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# EEG data (large files)
+*.npz
+*.edf
+*.bdf
+
+# Logs
+*.log
+/tmp/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Credentials and personal data
+credentials/
+journal/
